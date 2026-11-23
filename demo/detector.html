@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI-Text Detector: live demo</title>
+<style>
+:root{--bg:#f3f5f8;--card:#fff;--ink:#1d2733;--mute:#5f6b7a;--line:#dde2ea;--navy:#12336b;--ai:#b4531e;--hu:#1f6fb2}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,"Segoe UI",Roboto,Arial,sans-serif}
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+header{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;padding-top:26px;padding-bottom:6px;flex-wrap:wrap}
+h1{margin:0;font-size:28px;color:var(--navy)}header p{margin:2px 0 0;color:var(--mute)}h2{margin:0 0 10px;font-size:19px;color:var(--navy)}h3{margin:12px 0 6px;font-size:14px;color:var(--mute);font-weight:600}
+.status{font-size:13px;color:var(--mute);background:#e7ebf2;border-radius:999px;padding:5px 12px}
+.banner{background:#fff4e0;border:1px solid #f0cf94;color:#6b4a0d;border-radius:8px;padding:10px 14px;margin:12px 0 0;font-size:14px}
+.grid{display:grid;grid-template-columns:1.1fr .9fr;gap:18px;margin-top:16px;padding-bottom:10px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px}.wide{grid-column:1/-1}
+textarea{width:100%;height:230px;border:1px solid var(--line);border-radius:8px;padding:12px;font:inherit;resize:vertical;color:var(--ink)}
+textarea:focus{outline:2px solid #9db8e6;border-color:#9db8e6}
+.bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px}
+button{font:inherit;border-radius:8px;padding:9px 16px;cursor:pointer;border:1px solid var(--navy);background:var(--navy);color:#fff;font-weight:600}
+button.g{background:#fff;color:var(--navy);font-weight:500}#wc{margin-left:auto;color:var(--mute);font-size:14px}
+.det{padding:12px 0;border-top:1px solid var(--line)}.det:first-child{border-top:0;padding-top:0}
+.dh{display:flex;justify-content:space-between;gap:8px;align-items:baseline}.dn{font-weight:700}.ds{font-size:13px;color:var(--mute)}
+.meter{position:relative;height:14px;background:#e9edf3;border-radius:7px;margin:8px 0 4px;overflow:hidden}.fill{height:100%;transition:width .45s}.tick{position:absolute;left:50%;top:0;width:2px;height:100%;background:#7a8696}
+.sc{display:flex;justify-content:space-between;font-size:14px}.pct{font-weight:700}
+.note{font-size:13px;color:var(--mute);margin:10px 0 0}
+#hl{line-height:2;font-size:17px;padding:4px 0}#hl span{border-radius:4px;padding:1px 0}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:20px}.chip{display:inline-block;border-radius:999px;padding:4px 11px;margin:3px 5px 3px 0;font-size:14px}
+table{width:100%;border-collapse:collapse}th{text-align:left;font-size:13px;color:var(--mute);font-weight:600;padding:6px}td{padding:9px 6px;border-top:1px solid var(--line);font-size:15px}td.v{font-weight:700;color:var(--navy);white-space:nowrap}
+.sc2{position:relative;height:8px;background:#e9edf3;border-radius:4px;min-width:150px}.dot{position:absolute;top:-3px;width:14px;height:14px;border-radius:50%;transform:translateX(-50%);border:2px solid #fff}
+.leg{font-size:13px;color:var(--mute);margin-top:10px}.leg i{display:inline-block;width:11px;height:11px;border-radius:50%;margin:0 4px 0 12px;vertical-align:-1px}
+footer{max-width:1080px;margin:0 auto;padding:6px 20px 30px;color:var(--mute);font-size:13px}
+@media(max-width:820px){.grid,.two{grid-template-columns:1fr}}
+</style></head><body>
+<header class="wrap"><div><h1>AI-Text Detector</h1><p>Paste a paragraph and watch three detectors score it, live.</p></div><span class="status" id="status">Loading model…</span></header>
+<div class="wrap"><div class="banner" id="demo" hidden>This is a demo model trained on synthetic text, so its scores mean nothing. Replace model.js with the file exported from your real HC3 run.</div></div>
+<main class="wrap grid">
+<section class="card"><h2>Paragraph to analyse</h2><textarea id="t" placeholder="Paste a paragraph of 30 or more words…"></textarea>
+<div class="bar"><button id="go">Analyse</button><button class="g" id="h">Human-style sample</button><button class="g" id="a">AI-style sample</button><button class="g" id="c">Clear</button><span id="wc"></span></div></section>
+<section class="card"><h2>Scores</h2><div id="res"><p class="note">Paste or pick a sample to see scores.</p></div>
+<p class="note">Each score is the chance, according to that detector, that the text is AI-written. 50% is the cutoff. A score is a statistical guess, not proof, and must never be the only evidence against a person.</p></section>
+<section class="card wide"><h2>How Detector A read your text</h2><p class="note" style="margin:0 0 6px">Detector A looks at which words and word pairs appear. Orange words push the score toward AI, blue words toward human.</p><div id="hl"></div>
+<div class="two"><div><h3>Strongest pushes toward AI</h3><div id="up"></div></div><div><h3>Strongest pushes toward human</h3><div id="dn"></div></div></div></section>
+<section class="card wide"><h2>How Detector B read your text</h2><p class="note" style="margin:0 0 6px">Detector B ignores the words and reads six style numbers. The dots show where your text sits against the average human and AI training texts.</p>
+<table id="ft"></table><div class="leg"><i style="background:var(--hu)"></i>Average human text<i style="background:var(--ai)"></i>Average AI text<i style="background:var(--navy)"></i>Your text</div></section>
+</main>
+<footer>Detectors are trained on human and ChatGPT answers from five HC3 domains. They can be wrong on other kinds of text, on other AI models, and on short passages. In my study they wrongly flagged about 8–10% (A) and 42% (B) of human essays.</footer>
+<script src="model.js"></script>
+<script>
+const M=window.DETECTOR_MODEL,$=id=>document.getElementById(id);
+const clean=t=>String(t).split("\\n").join(" ").replace(/\burl_\d+\b/g," ").replace(/\s+([,.;:!?)\]])/g,"$1").replace(/([(\[])\s+/g,"$1").replace(/\s+/g," ").trim();
+const tok=t=>t.toLowerCase().match(/[\p{L}\p{N}_]{2,}/gu)||[];
+const sig=z=>1/(1+Math.exp(-z));
+const idx=new Map(M.A.terms.map((w,i)=>[w,i]));
+function detA(t){const w=tok(t),c=new Map();const add=k=>{if(idx.has(k))c.set(k,(c.get(k)||0)+1)};for(let i=0;i<w.length;i++){add(w[i]);if(i+1<w.length)add(w[i]+" "+w[i+1])}
+ let n=0;const x=[];c.forEach((v,k)=>{const i=idx.get(k),u=(1+Math.log(v))*M.A.idf[i];x.push([k,i,u]);n+=u*u});n=Math.sqrt(n)||1;
+ let z=M.A.b;const parts=x.map(([k,i,u])=>{const ct=M.A.coef[i]*u/n;z+=ct;return[k,ct]});return{p:sig(z),parts}}
+const dec=s=>{const b=atob(s),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u.buffer};
+const FE=new Int8Array(dec(M.B.feat)),TH=new Float32Array(dec(M.B.thr)),LE=new Uint16Array(dec(M.B.left)),RI=new Uint16Array(dec(M.B.right)),PR=new Uint8Array(dec(M.B.prob)),OF=M.B.offs;
+function stylo(t){const s=t.split(/[.!?]+\s|[.!?]+$/).filter(x=>x.trim()).map(x=>x.trim().split(/\s+/).length),S=s.length?s:[0];
+ let w=t.match(/[A-Za-z']+/g)||["a"];const n=w.length,L=w.map(x=>x.length),m=S.reduce((a,b)=>a+b)/S.length;
+ return[m,Math.sqrt(S.reduce((a,b)=>a+(b-m)**2,0)/S.length),L.reduce((a,b)=>a+b)/n,new Set(w.map(x=>x.toLowerCase())).size/n,(t.match(/[,;:]/g)||[]).length/n,L.filter(x=>x>=7).length/n]}
+function detB(f){const x=f.map(Math.fround);let sum=0;const T=OF.length-1;for(let k=0;k<T;k++){const o=OF[k];let i=0;while(FE[o+i]>=0)i=x[FE[o+i]]<=TH[o+i]?LE[o+i]:RI[o+i];sum+=PR[o+i]/255}return sum/T}
+function detL(t){const n=t.split(/\s+/).filter(Boolean).length;return sig(M.L.coef*Math.log1p(n)+M.L.b)}
+function analyse(raw){const t=clean(raw),f=stylo(t);return{t,f,A:detA(t),B:detB(f),L:detL(t),n:t.split(/\s+/).filter(Boolean).length}}
+window.__analyse=analyse;
+const NAMES=["Average sentence length","Sentence length variation","Average word length","Vocabulary variety","Comma and punctuation rate","Long-word share"];
+const band=p=>p>=.6?"Looks AI-written":p<=.4?"Looks human-written":"Uncertain";
+function bar(name,sub,p){const c=p>=.5?"var(--ai)":"var(--hu)";return"<div class='det'><div class='dh'><span class='dn'>"+name+"</span><span class='ds'>"+sub+"</span></div><div class='meter'><div class='fill' style='width:"+(p*100).toFixed(1)+"%;background:"+c+"'></div><div class='tick'></div></div><div class='sc'><span class='pct' style='color:"+c+"'>"+Math.round(p*100)+"% AI-like</span><span>"+band(p)+"</span></div></div>"}
+function run(){const raw=$("t").value;$("wc").textContent=raw.trim()?raw.trim().split(/\s+/).length+" words":"";if(!raw.trim()){$("res").innerHTML="<p class='note'>Paste or pick a sample to see scores.</p>";["hl","up","dn","ft"].forEach(i=>$(i).innerHTML="");return}
+ const r=analyse(raw);let h=bar("Detector A","word patterns",r.A.p)+bar("Detector B","writing style",r.B)+bar("Length-only control","word count",r.L);
+ if(r.n<30)h+="<p class='note'>This is under 30 words, so the scores are less reliable.</p>";$("res").innerHTML=h;
+ const cm=new Map(r.A.parts),mx=Math.max(...r.A.parts.map(p=>Math.abs(p[1])),1e-9);
+ $("hl").innerHTML=r.t.replace(/[\p{L}\p{N}_]{2,}|[^\p{L}\p{N}_]+|[\p{L}\p{N}_]/gu,s=>{const v=cm.get(s.toLowerCase());if(v===undefined||s.length<2||!/[\p{L}\p{N}_]/u.test(s))return s.replace(/</g,"&lt;");const a=Math.min(.75,Math.abs(v)/mx*.75+.08);return"<span style='background:"+(v>0?"rgba(180,83,30,"+a+")":"rgba(31,111,178,"+a+")")+"'>"+s.replace(/</g,"&lt;")+"</span>"});
+ const P=[...r.A.parts].sort((a,b)=>b[1]-a[1]),chip=(a,c)=>a.map(([k,v])=>"<span class='chip' style='background:"+c+"'>"+k.replace(/</g,"&lt;")+"</span>").join("")||"<span class='note'>None found</span>";
+ $("up").innerHTML=chip(P.filter(x=>x[1]>0).slice(0,8),"#f7e1d3");$("dn").innerHTML=chip(P.filter(x=>x[1]<0).reverse().slice(0,8),"#d9e8f6");
+ $("ft").innerHTML="<tr><th>Feature</th><th>Your text</th><th>Human avg</th><th>AI avg</th><th>Where it sits</th></tr>"+r.f.map((v,i)=>{const a=M.B.mean0[i],b=M.B.mean1[i],lo=Math.min(a,b,v),hi=Math.max(a,b,v),sp=(hi-lo)||1,pos=x=>(5+(x-lo)/sp*90).toFixed(1)+"%";
+  return"<tr><td>"+NAMES[i]+"</td><td class='v'>"+v.toFixed(3)+"</td><td>"+a.toFixed(3)+"</td><td>"+b.toFixed(3)+"</td><td><div class='sc2'><span class='dot' style='left:"+pos(a)+";background:var(--hu)'></span><span class='dot' style='left:"+pos(b)+";background:var(--ai)'></span><span class='dot' style='left:"+pos(v)+";background:var(--navy)'></span></div></td></tr>"}).join("")}
+const HS="Honestly I think the new bus route is a good idea. It saves me time in the morning, but the stops are too far apart and my friends agree. We were thinking of writing to the council about it, though I doubt anyone will actually read it.";
+const AS="Public transportation plays a crucial role in modern urban planning. It reduces traffic congestion, lowers carbon emissions, and provides affordable mobility for residents. However, effective implementation requires careful consideration of route design, funding, and community needs. By addressing these factors, cities can create more sustainable and inclusive transportation systems.";
+let tm;$("t").oninput=()=>{clearTimeout(tm);tm=setTimeout(run,450)};$("go").onclick=run;
+$("h").onclick=()=>{$("t").value=HS;run()};$("a").onclick=()=>{$("t").value=AS;run()};$("c").onclick=()=>{$("t").value="";run()};
+$("status").textContent="Model ready · trained on "+M.meta.texts.toLocaleString()+" texts";if(M.meta.source==="demo")$("demo").hidden=false;
+</script></body></html>
