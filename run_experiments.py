@@ -1,6 +1,6 @@
 
 import argparse, os
-from lab import data, experiments as ex, plots
+from implementation import data, experiments as ex, plots
 
 ap = argparse.ArgumentParser()
 ap.add_argument("--source", default="demo", choices=["demo", "hc3"])
