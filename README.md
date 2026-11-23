@@ -40,7 +40,9 @@ ai-text-detection-generalization/
 │
 ├── demo/
 │   ├── detector.html
-│   └── model.js
+│   ├── model.js
+│   ├── export_model.py
+│   └── README.md
 │
 ├── data/
 │   └── README.md
@@ -49,9 +51,9 @@ ai-text-detection-generalization/
 ├── extras.py
 ├── run_experiments.py
 ├── train.csv
-├── README.md
 ├── requirements.txt
-└── .gitignore
+├── .gitignore
+└── README.md
 ```
 
 The repository contains the Python implementation, project documentation, experimental scripts, dataset documentation, and an offline browser demo.
