@@ -1,4 +1,4 @@
-LIVE AI-TEXT DETECTOR (runs in the browser, offline)
+Demo (runs in the browser, offline)
 
 1. Open your Colab project folder (the one with the lab folder). Drag export_model.py into it.
 2. Run:   !python export_model.py --cap 800
