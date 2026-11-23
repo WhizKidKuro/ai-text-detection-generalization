@@ -1,5 +1,5 @@
 import argparse, os, textwrap, numpy as np, pandas as pd
-from lab import data, experiments as ex, models
+from implementation import data, experiments as ex, models
 
 ap = argparse.ArgumentParser()
 ap.add_argument("--essays", required=True); ap.add_argument("--source", default="hc3", choices=["hc3", "demo"])
